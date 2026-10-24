@@ -1,44 +1,27 @@
-
-// 1. Trace `POST /create-post` step by step, from the request arriving to the response leaving. Name each file it passes through.
-
-
+// 2. Why does Multer use `memoryStorage()`, and what is `req.file.buffer`? Why does `storage.service.js` call `.toString("base64")`?
 
 /*
+MY UNDERSTANDING: MULTER BUFFER AND BASE64
 
-MY UNDERSTANDING OF POST /create-post
-
-1. console.log(req.body) and console.log(req.file)
-   - These are used for debugging.
-   - req.body gives us information about the text data, such as the caption.
-   - req.file gives us information about the uploaded image, including its name and buffer.
-   - This information helps us understand what data we have received and makes debugging and further code writing easier.
+1. memoryStorage()
+   - Multer stores uploaded file contents in server RAM.
+   - It makes the file's binary data available through req.file.buffer.
 
 2. req.file.buffer
-   - The buffer contains the actual bytes of our uploaded image.
-   - We pass this buffer to the uploadFile() function so that the image can be uploaded to ImageKit.
-   - We imported the uploadFile function from our ImageKit storage service file.
+   - This is a Node.js Buffer containing the original file bytes.
+   - req.file also contains metadata such as the filename, MIME type, and size.
 
-3. const result = await uploadFile(req.file.buffer)
-   - The image is uploaded to ImageKit through the uploadFile function.
-   - After the upload, the returned data is stored in the result variable.
-   - We can access the uploaded image's URL using result.url.
+3. buffer.toString("base64")
+   - Converts the buffer's bytes into a Base64-encoded string.
+   - It does not decode the data or recreate the image.
+   - The original buffer remains unchanged.
 
-4. postModel.create()
-   - We have already created the Post schema and model in a separate model file.
-   - The model provides methods such as create(), find(), findByIdAndDelete(),
-     and findByIdAndUpdate() for database operations.
-   - postModel.create() creates and saves a post document in MongoDB.
-   - The image field receives result.url, and the caption field receives
-     req.body.caption.
-   - The image itself is stored on ImageKit, while its URL is stored in MongoDB.
+4. Why Base64?
+   - The ImageKit SDK's upload method accepts Base64 input.
+   - We convert the buffer into the format expected by that method.
+   - Base64 increases the encoded data size by roughly 33%.
 
-5. const post
-   - The created post is assigned to the post variable.
-   - The post contains the document created through postModel.create().
-
-6. res.status(201).json()
-   - We send a response with status code 201 and a success message.
-   - The post is included in the response so that Postman receives the
-     created post as JSON.
-   - We are sending the already-created post, not creating it again.
+5. The key distinction
+   - buffer: original binary data.
+   - encodedImage: a Base64 text representation of that data.
 */
