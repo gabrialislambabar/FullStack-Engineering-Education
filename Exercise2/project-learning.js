@@ -1,27 +1,29 @@
-// 2. Why does Multer use `memoryStorage()`, and what is `req.file.buffer`? Why does `storage.service.js` call `.toString("base64")`?
+// 3. In `server.js`, why is `await connectDB()` before `app.listen`? Why is a top-level `await` allowed in this file? (Hint: look at `package.json`.)
 
 /*
-MY UNDERSTANDING: MULTER BUFFER AND BASE64
+MY UNDERSTANDING: DATABASE CONNECTION AND SERVER STARTUP
 
-1. memoryStorage()
-   - Multer stores uploaded file contents in server RAM.
-   - It makes the file's binary data available through req.file.buffer.
+1. await connectDB()
+   - connectDB() establishes a connection with MongoDB.
+   - await waits for the connection promise to resolve successfully.
+   - This ensures the server doesn't start accepting requests before
+     the database connection is ready.
+   - If the connection fails and the error isn't handled, app.listen()
+     won't execute.
 
-2. req.file.buffer
-   - This is a Node.js Buffer containing the original file bytes.
-   - req.file also contains metadata such as the filename, MIME type, and size.
+2. app.listen()
+   - Starts the HTTP server listening on the specified port.
+   - It allows the server to begin accepting incoming requests.
 
-3. buffer.toString("base64")
-   - Converts the buffer's bytes into a Base64-encoded string.
-   - It does not decode the data or recreate the image.
-   - The original buffer remains unchanged.
+3. Why connectDB() comes first
+   - Database-dependent requests could fail if the server starts
+     before MongoDB is ready.
+   - Connecting first helps ensure the database is available
+     when requests arrive.
 
-4. Why Base64?
-   - The ImageKit SDK's upload method accepts Base64 input.
-   - We convert the buffer into the format expected by that method.
-   - Base64 increases the encoded data size by roughly 33%.
-
-5. The key distinction
-   - buffer: original binary data.
-   - encodedImage: a Base64 text representation of that data.
+4. Top-level await
+   - package.json contains "type": "module".
+   - This tells Node.js to treat .js files as ES modules.
+   - ES modules support top-level await outside an async function.
+   - Therefore, server.js can use await connectDB() directly.
 */
