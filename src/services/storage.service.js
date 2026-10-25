@@ -5,10 +5,10 @@ const imagekit = new ImageKit({
 });
 
 
-async function uploadFile(buffer) {
+async function uploadFile(buffer, originalname) {
     const  result =  await imagekit.files.upload({
       file: buffer.toString("base64"),
-      fileName: "screenshot-2026-10-23_22-04-59.png"
+      fileName: originalname,
 
   })
   return result;

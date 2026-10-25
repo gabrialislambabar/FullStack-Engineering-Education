@@ -1,74 +1,62 @@
 /*
- * LEARNING NOTES — Required fields, undefined, and Express responses
+ * LEARNING NOTES — Dynamic filenames and communication between modules
  *
- * Problem:
- * A post could be created without a caption. The task is to make the
- * caption required and return HTTP 400 when the request is invalid,
- * rather than allowing invalid data or crashing the route.
+ * Question 8:
+ * Why is using the same hardcoded fileName for every upload a problem?
+ * How can the filename come from the uploaded file instead?
  *
- * 1. req.body and req.file
- * - req.body contains the text fields parsed from the request, such as
- *   req.body.caption.
- * - req.file is populated by Multer's upload.single("image") middleware
- *   when a file is uploaded.
- * - If no image is uploaded, req.file is undefined.
+ * 1. Hardcoded vs. dynamic values
+ * - A hardcoded filename is a fixed value written directly in the source code.
+ * - If every upload uses the same hardcoded filename, different uploads may
+ *   share the same name, making files harder to distinguish and organize.
+ * - A dynamic filename is obtained at runtime from the current uploaded file.
+ * - Multer provides the client's original filename through req.file.originalname.
  *
- * 2. Accessing object properties
- * - req.body.caption accesses the caption property of the req.body object.
- * - req.file.buffer accesses the buffer property of the file object.
- * - A Buffer is a Node.js object representing binary data. It is not a
- *   primitive type such as a string, number, or boolean, but its properties
- *   can still be accessed normally.
+ * 2. Responsibilities of app.js
+ * - Express handles incoming HTTP requests.
+ * - upload.single("image") is Multer middleware that processes the uploaded
+ *   file from multipart form data.
+ * - When a file is uploaded successfully, Multer makes its metadata and
+ *   contents available through req.file.
+ * - req.file.buffer contains the file's binary data.
+ * - req.file.originalname contains the original filename supplied by the client.
  *
- * 3. Why accessing req.file.buffer can crash
- * - If no file is uploaded, req.file is undefined.
- * - Evaluating req.file.buffer then throws a TypeError because JavaScript
- *   cannot access a property on undefined.
- * - Therefore, check whether req.file exists BEFORE accessing req.file.buffer.
+ * 3. Passing data between modules
+ * - app.js calls the uploadFile function exported by storage.service.js.
+ * - Function arguments pass the required values from the route to the service.
+ * - The first argument, req.file.buffer, is received as buffer.
+ * - The second argument, req.file.originalname, is received as originalname.
+ * - The parameter names inside the function do not have to match the argument
+ *   expressions in app.js; their positions determine which values they receive.
  *
- * 4. Checking for undefined
- * - If a request has no caption, req.body.caption will commonly be undefined.
- * - `req.body.caption === undefined` checks whether the value is undefined.
- * - `caption === false` is not an equivalent check: undefined is not false.
- * - `if (!req.body.caption)` also catches other falsy values, such as an
- *   empty string. For required text, checking that the string is non-empty
- *   after trimming is more robust.
+ * 4. Responsibilities of storage.service.js
+ * - This module configures the ImageKit SDK and handles file uploads.
+ * - buffer.toString("base64") converts the binary Buffer into a Base64 string
+ *   for the file value sent to ImageKit.
+ * - fileName: originalname supplies the filename received from app.js.
+ * - The service does not need direct access to Express's req object because
+ *   the required data is passed to it as function arguments.
  *
- * 5. Truthy and falsy values
- * - JavaScript objects, including Buffer objects, are truthy—even an empty
- *   Buffer object.
- * - undefined, null, false, 0, and an empty string are falsy.
- * - A value being an object does not mean it cannot be checked in a condition.
- * - To check for an uploaded file, checking req.file directly is clearer
- *   than trying to compare its buffer with false.
+ * 5. Understanding async and await
+ * - async allows the function to return a Promise.
+ * - await waits for the ImageKit upload Promise to settle and provides its result.
+ * - await does not transport the arguments between modules; the function call
+ *   passes the arguments, while await waits for the asynchronous operation.
  *
- * 6. Why the request kept loading / why return matters
- * - Sending res.status(400).json(...) sends an error response to the client.
- * - It does not automatically stop the remaining JavaScript in the handler.
- * - Use `return res.status(400).json(...)` for validation failures so the
- *   handler exits immediately and does not continue into upload or database
- *   creation logic.
- * - `break` exits a loop or switch; it does not exit an ordinary route handler.
+ * 6. Important debugging lessons
+ * - JavaScript is case-sensitive: Multer uses originalname, not originalName.
+ * - A missing req.file can cause an error when accessing req.file.buffer.
+ * - Validate that the file exists before reading its properties.
+ * - If a function expects two arguments, pass both the buffer and filename.
  *
- * 7. Validation order
- * - Validate that req.file exists before accessing req.file.buffer.
- * - Validate that the caption exists and is non-empty before uploading or
- *   saving the post.
- * - If either required field is missing, return HTTP 400.
- * - Only continue to upload and create the database document after both
- *   validations pass.
+ * 7. Result
+ * - The filename is no longer fixed in the source code.
+ * - Each upload can use the original filename supplied with that file.
+ * - This demonstrates dynamic data handling and separation of responsibilities
+ *   between the Express route and the storage service.
  *
- * 8. Mongoose schema validation
- * - A schema defines the expected shape and validation rules for documents.
- * - Marking caption as required makes Mongoose reject documents without a
- *   valid caption when the document is created or saved.
- * - Schema validation is important, but route-level validation lets the API
- *   return a clear HTTP 400 response instead of exposing an unhandled error.
- *
- * Debugging lesson:
- * - Observe req.body and req.file in the terminal.
- * - Test the request with both fields, without the image, and without the
- *   caption.
- * - Follow the execution order: an error can happen before a later `if`
- *   statement is reached.
+ * Note:
+ * - Original filenames are not guaranteed to be unique or trustworthy.
+ * - A production system may generate unique storage filenames to avoid naming
+ *   collisions while keeping the original filename as metadata.
  */

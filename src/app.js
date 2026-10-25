@@ -17,6 +17,7 @@ app.use(express.json());
 app.post("/create-post", upload.single("image"), async (req, res) => {
     console.log(req.body)
     console.log(req.file)
+    console.log( req.file?.originalname);
     
     const buffer = req.file;
     const caption = req.body.caption;
@@ -34,7 +35,7 @@ app.post("/create-post", upload.single("image"), async (req, res) => {
      }
 
     if (buffer && caption) {
-    const result = await uploadFile(req.file.buffer);
+    const result = await uploadFile(req.file.buffer, req.file.originalname);
 
     const post = await postModel.create({
         image : result.url,
