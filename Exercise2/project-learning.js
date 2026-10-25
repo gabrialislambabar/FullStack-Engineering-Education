@@ -1,53 +1,49 @@
+// 10. `GET /posts/:id`: return one post. Handle both a missing post (`404`) and an invalid id format. What does Mongoose do with an invalid id?
+
 /*
- * LEARNING NOTES — dotenv and process.env
  *
- * Question 9:
- * dotenv is loaded in both server.js and db.js. Is it needed twice?
+ * LEARNING NOTES: GET /posts/:id — Fetching a Single Post
  *
- * 1. What dotenv does
- * - dotenv reads environment variables from a .env file.
- * - dotenv/config loads dotenv automatically when imported.
- * - The values become available through Node.js's process.env object.
- * - Example: process.env.MONGO_URI and process.env.IMAGEKIT_PRIVATE_KEY.
+ * 1. ROUTE PARAMETERS
+ * Express stores dynamic URL parameters in req.params.
+ * For GET /posts/:id, req.params.id contains the ID supplied in the URL.
  *
- * 2. Why one import can be enough
- * - server.js is the application's entry point.
- * - Importing dotenv/config at startup loads the environment variables.
- * - Modules such as db.js and storage.service.js execute within the same
- *   Node.js process and can read the same process.env values.
- * - Environment variables are process-wide, not local to the module that
- *   loaded dotenv.
+ * 2. QUERYING WITH MONGOOSE
+ * postModel.findById(id) searches for a document using its MongoDB _id.
+ * Unlike find(), findById() returns one document or null, not an array.
+ * Because the query is asynchronous, await waits for its result.
  *
- * 3. Why removing dotenv from server.js caused an error
- * - ImageKit reads its private key from process.env.
- * - Without loading the .env file, that variable may be undefined.
- * - The upload fails because ImageKit has not received the required key.
- * - The solution is to ensure environment variables are loaded before
- *   environment-dependent services are initialized.
+ * 3. HANDLING A MISSING DOCUMENT
+ * A validly formatted ID may not match any document.
+ * In that case, findById() returns null without throwing an error.
+ * An if statement checks for null, and the API should return HTTP 404.
  *
- * 4. ES module execution order
- * - Static ES module imports are evaluated before the importing module's
- *   ordinary body executes.
- * - Loading dotenv/config as an entry-point dependency makes environment
- *   variables available before the application starts its normal setup.
- * - Keep dotenv/config at the top of server.js for a clear startup sequence.
+ * 4. HANDLING AN INVALID ID
+ * An ID that cannot be cast to MongoDB's expected ID format can cause
+ * Mongoose to throw a CastError when the query executes.
+ * The try...catch structure allows the route to handle that exception.
+ * A malformed client-supplied ID should generally receive HTTP 400.
  *
- * 5. Application design
- * - server.js loads environment variables and starts the application.
- * - db.js reads the MongoDB connection string from process.env.
- * - storage.service.js reads the ImageKit private key from process.env.
- * - These modules do not need to load dotenv separately when server.js
- *   reliably loads it first.
+ * 5. TRY...CATCH
+ * The try block contains code that might throw an exception.
+ * If an exception occurs, execution moves to the catch block.
+ * The catch block can inspect the error and send an appropriate response.
  *
- * 6. Verification
- * - Remove the redundant dotenv import from db.js.
- * - Keep dotenv/config in server.js.
- * - Start the application and verify database connection and image upload.
- * - Successful tests confirm that the startup path supplies the required
- *   environment variables to both services.
+ * 6. HTTP STATUS CODES
+ * 200 OK: The post was found and returned successfully.
+ * 400 Bad Request: The supplied ID is malformed.
+ * 404 Not Found: No post exists for a validly formatted ID.
  *
- * 7. Security reminder
- * - Keep .env out of version control using .gitignore.
- * - Never expose private keys in client-side code or public repositories.
- * - Rotate credentials if they have been exposed.
+ * 7. RETURNING FROM A ROUTE HANDLER
+ * return res.status(...).json(...) sends the response and exits the
+ * current route-handler function, preventing subsequent code from running.
+ *
+ * 8. TESTING
+ * Testing with Postman helped verify the three main outcomes:
+ * an existing post, a missing post, and an invalid ID.
+ *
+ * FUTURE IMPROVEMENT:
+ * Inspect the caught error and handle CastError specifically instead of
+ * returning 400 for every possible exception. Unexpected database or
+ * server errors should not be misreported as client errors.
  */
