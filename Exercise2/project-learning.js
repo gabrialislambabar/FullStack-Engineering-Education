@@ -1,29 +1,47 @@
-// 3. In `server.js`, why is `await connectDB()` before `app.listen`? Why is a top-level `await` allowed in this file? (Hint: look at `package.json`.)
+4. What does `postModel.find()` return when called with no arguments? What would change if you passed `{ caption: "hello" }`?
+
 
 /*
-MY UNDERSTANDING: DATABASE CONNECTION AND SERVER STARTUP
+MY UNDERSTANDING: TWO API BEHAVIOURS AND THEIR CAUSES
 
-1. await connectDB()
-   - connectDB() establishes a connection with MongoDB.
-   - await waits for the connection promise to resolve successfully.
-   - This ensures the server doesn't start accepting requests before
-     the database connection is ready.
-   - If the connection fails and the error isn't handled, app.listen()
-     won't execute.
+1. POST /create-post — Submitting only the caption
 
-2. app.listen()
-   - Starts the HTTP server listening on the specified port.
-   - It allows the server to begin accepting incoming requests.
+   Error:
+   TypeError: Cannot read properties of undefined (reading 'buffer')
 
-3. Why connectDB() comes first
-   - Database-dependent requests could fail if the server starts
-     before MongoDB is ready.
-   - Connecting first helps ensure the database is available
-     when requests arrive.
+   Why it happens:
+   - Multer's upload.single("image") middleware processes the uploaded file.
+   - If I submit only the caption without an image, req.body.caption
+     may exist, but req.file is undefined.
+   - Accessing req.file.buffer therefore causes a TypeError because
+     req.file does not exist.
 
-4. Top-level await
-   - package.json contains "type": "module".
-   - This tells Node.js to treat .js files as ES modules.
-   - ES modules support top-level await outside an async function.
-   - Therefore, server.js can use await connectDB() directly.
+   How to handle it:
+   - Check whether req.file exists before accessing req.file.buffer.
+   - If the image is missing, return HTTP 400 (Bad Request) with a
+     clear JSON message.
+   - Only upload the image to ImageKit when a file is provided.
+
+2. GET /posts — Receiving an empty array
+
+   Response:
+   {
+     message: "post fetched successfully",
+     posts: []
+   }
+
+   Why it happens:
+   - postModel.find() with no arguments searches for all documents
+     in the collection associated with the model.
+   - If the collection contains no matching documents, it returns
+     an empty array: [].
+   - An empty array is a valid result, not an error.
+   - The message indicates that the route returned a successful response,
+     but it does not mean that any posts exist.
+
+   What if I pass { caption: "hello" }?
+   - postModel.find({ caption: "hello" }) searches for documents whose
+     caption field matches the string "hello".
+   - It returns an array of all matching documents.
+   - If no documents match, it returns [].
 */
