@@ -6,7 +6,21 @@ import postModel from "./models/post.model.js";
 // Saving server into a variable
 const app = express();
 // Saving multer middleware for reading 'form-data' into upload variable
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = ["image/jpeg", "image/png"];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("INVALID_FILE_TYPE"));
+    }
+  },
+});
 // Json reading middleware
 app.use(express.json());
 
