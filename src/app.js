@@ -74,4 +74,28 @@ app.get("/posts/:id", async (req, res) => {
   }
 });
 
+//-----------------------------------------------------------------------
+// DELETE/posts/:id operation
+// ----------------------------------------------------------------------
+
+app.delete("/posts/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const delPost = await postModel.findByIdAndDelete(id);
+    if (delPost === null) {
+      res.status(404).json({
+        message: "404 not found",
+      });
+    } else {
+      res.status(200).json({
+        message: "post deleted successfully",
+      });
+    }
+  } catch (error) {
+    res.status(404).json({
+      message: "404 Bad request",
+    });
+  }
+});
+
 export default app;

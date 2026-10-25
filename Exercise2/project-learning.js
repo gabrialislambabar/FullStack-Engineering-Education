@@ -1,49 +1,39 @@
-// 10. `GET /posts/:id`: return one post. Handle both a missing post (`404`) and an invalid id format. What does Mongoose do with an invalid id?
-
+11. `DELETE /posts/:id`: delete a post, and return `404` if it doesn't exist.
 /*
- *
- * LEARNING NOTES: GET /posts/:id — Fetching a Single Post
+ * LEARNING NOTES: DELETE /posts/:id — Deleting a Post
  *
  * 1. ROUTE PARAMETERS
- * Express stores dynamic URL parameters in req.params.
- * For GET /posts/:id, req.params.id contains the ID supplied in the URL.
+ * req.params.id extracts the post ID supplied in the URL.
  *
- * 2. QUERYING WITH MONGOOSE
- * postModel.findById(id) searches for a document using its MongoDB _id.
- * Unlike find(), findById() returns one document or null, not an array.
- * Because the query is asynchronous, await waits for its result.
+ * 2. DELETING WITH MONGOOSE
+ * findByIdAndDelete(id) searches for a document by its _id and deletes
+ * it if found. It returns the deleted document or null if no document
+ * matches the supplied, validly formatted ID.
  *
- * 3. HANDLING A MISSING DOCUMENT
- * A validly formatted ID may not match any document.
- * In that case, findById() returns null without throwing an error.
- * An if statement checks for null, and the API should return HTTP 404.
+ * 3. CHECKING THE RESULT
+ * If the returned value is null, no matching post was found, so the API
+ * should respond with HTTP 404 Not Found.
+ * If a document is returned, the deletion succeeded and the API can
+ * respond with HTTP 200 OK.
  *
- * 4. HANDLING AN INVALID ID
- * An ID that cannot be cast to MongoDB's expected ID format can cause
- * Mongoose to throw a CastError when the query executes.
- * The try...catch structure allows the route to handle that exception.
- * A malformed client-supplied ID should generally receive HTTP 400.
+ * 4. ASYNCHRONOUS OPERATIONS
+ * await waits for the database operation to resolve before the route
+ * checks its result and sends the response.
  *
- * 5. TRY...CATCH
- * The try block contains code that might throw an exception.
- * If an exception occurs, execution moves to the catch block.
- * The catch block can inspect the error and send an appropriate response.
+ * 5. ERROR HANDLING
+ * The try block contains the database operation that may throw an error.
+ * The catch block handles exceptions, including invalid ID formats that
+ * cause Mongoose to throw a CastError.
+ * A malformed ID should generally receive HTTP 400 Bad Request.
+ * Unexpected database or server errors should not be reported as 404.
  *
- * 6. HTTP STATUS CODES
- * 200 OK: The post was found and returned successfully.
- * 400 Bad Request: The supplied ID is malformed.
- * 404 Not Found: No post exists for a validly formatted ID.
+ * 6. EARLY RETURNS
+ * Using return with res.status(...).json(...) exits the route handler
+ * after sending the response and prevents accidental continuation.
  *
- * 7. RETURNING FROM A ROUTE HANDLER
- * return res.status(...).json(...) sends the response and exits the
- * current route-handler function, preventing subsequent code from running.
- *
- * 8. TESTING
- * Testing with Postman helped verify the three main outcomes:
- * an existing post, a missing post, and an invalid ID.
- *
- * FUTURE IMPROVEMENT:
- * Inspect the caught error and handle CastError specifically instead of
- * returning 400 for every possible exception. Unexpected database or
- * server errors should not be misreported as client errors.
+ * 7. REUSING PREVIOUS KNOWLEDGE
+ * This route reuses the concepts learned in GET /posts/:id:
+ * route parameters, Mongoose ID queries, null checks, await, and
+ * try...catch. The main difference is that this operation deletes
+ * the document instead of retrieving it.
  */
