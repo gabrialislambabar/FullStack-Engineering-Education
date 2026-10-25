@@ -98,4 +98,33 @@ app.delete("/posts/:id", async (req, res) => {
   }
 });
 
+//-----------------------------------------------------------------------
+// PATCH/posts/:id operation
+// ----------------------------------------------------------------------
+
+app.patch("/posts/:id", async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const caption = req.body.caption;
+    const updateData = { caption };
+    const updatePost = await postModel.findByIdAndUpdate(id, updateData);
+
+    if (updatePost === null) {
+      res.status(404).json({
+        message: "404 not found",
+      });
+    } else {
+      res.status(200).json({
+        message: "post updated successfully",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({
+      message: "404 Bad request",
+    });
+  }
+});
+
 export default app;
