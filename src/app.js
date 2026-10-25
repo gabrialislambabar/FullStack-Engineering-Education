@@ -17,7 +17,11 @@ app.use(express.json());
 app.post("/create-post", upload.single("image"), async (req, res) => {
     console.log(req.body)
     console.log(req.file)
+    
+    const buffer = req.file;
+    // const caption = req.body.caption;
 
+    if (buffer) {
     const result = await uploadFile(req.file.buffer);
 
     const post = await postModel.create({
@@ -29,6 +33,11 @@ app.post("/create-post", upload.single("image"), async (req, res) => {
     message: "Post created successfully",
     post: post
   })
+  } else {
+    res.status(400).json({
+      message: "Image cannot be found"
+    })
+  }
   
 })
 
