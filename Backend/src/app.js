@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import uploadFile from "./services/storage.service.js";
 import postModel from "./models/post.model.js";
+import cors from "cors";
 
 // Saving server into a variable
 const app = express();
@@ -23,6 +24,8 @@ const upload = multer({
 });
 // Json reading middleware
 app.use(express.json());
+// cors middleware for establishing communication between frontend and backend
+app.use(cors())
 
 //-----------------------------------------------------------------------
 // POST operation
@@ -67,10 +70,10 @@ app.post("/create-post", upload.single("image"), async (req, res) => {
 // GET operation
 // ----------------------------------------------------------------------
 
-app.get("/posts/:id", async (req, res) => {
-  const id = req.params.id;
+app.get("/posts", async (req, res) => {
+
   try {
-    const posts = await postModel.findById(id);
+    const posts = await postModel.find();
     if (posts === null) {
       res.status(404).json({
         message: "404 not found",
