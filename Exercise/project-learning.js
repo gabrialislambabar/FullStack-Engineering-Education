@@ -1,4 +1,4 @@
-
+/*
 ## Learning Milestone: Backend API Integration with React
 
 ### What I built
@@ -28,3 +28,4 @@ I am postponing deeper React study until I complete my current backend learning 
 I will return to React in a dedicated learning phase to understand the syntax, component architecture, hooks, state management, and rendering behavior properly.
 
 **Current status:** Built and integrated a basic frontend for testing backend APIs; React fundamentals are encountered but not yet fully studied.
+*/
